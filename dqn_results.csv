@@ -1,0 +1,11 @@
+,Experiment,LR,Gamma,Status
+0,1,0.01,0.99,Complete
+1,2,0.005,0.99,Complete
+2,3,0.001,0.99,Complete
+3,4,0.0005,0.99,Complete
+4,5,0.0001,0.99,Complete
+5,6,0.001,0.7,Complete
+6,7,0.001,0.85,Complete
+7,8,0.001,0.9,Complete
+8,9,0.001,0.95,Complete
+9,10,0.001,0.995,Complete

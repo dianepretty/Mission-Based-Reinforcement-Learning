@@ -1,0 +1,6 @@
+gymnasium==0.29.1
+stable-baselines3[extra]==2.2.1
+pygame==2.5.2
+numpy
+pandas
+matplotlib
