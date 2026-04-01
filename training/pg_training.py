@@ -1,62 +1,59 @@
+import os
 import gymnasium as gym
 from stable_baselines3 import PPO, A2C
 from environment.custom_env import CivicReportingEnv
-import pandas as pd
-import os
 
-# Ensure the models directory exists
-os.makedirs("models/pg", exist_ok=True)
+# Setup Directories
+MODEL_DIR = "models/pg/"
+LOG_DIR = "logs/pg/"
+os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
 
-# 10 experiments (5 PPO, 5 A2C) varying LR and Entropy Coefficient
-# Entropy Coefficient (ent_coef) helps the agent explore different institutions
-pg_experiments = [
-    # PPO Experiments (Proximal Policy Optimization)
-    {"algo": "PPO", "lr": 0.001, "ent_coef": 0.01, "gamma": 0.99},
-    {"algo": "PPO", "lr": 0.0003, "ent_coef": 0.01, "gamma": 0.99},
-    {"algo": "PPO", "lr": 0.0001, "ent_coef": 0.05, "gamma": 0.95},
-    {"algo": "PPO", "lr": 0.001, "ent_coef": 0.0, "gamma": 0.90},
-    {"algo": "PPO", "lr": 0.0005, "ent_coef": 0.02, "gamma": 0.99},
-    
-    # A2C Experiments (Advantage Actor-Critic)
-    {"algo": "A2C", "lr": 0.007, "ent_coef": 0.01, "gamma": 0.99},
-    {"algo": "A2C", "lr": 0.001, "ent_coef": 0.01, "gamma": 0.99},
-    {"algo": "A2C", "lr": 0.0007, "ent_coef": 0.05, "gamma": 0.95},
-    {"algo": "A2C", "lr": 0.0001, "ent_coef": 0.0, "gamma": 0.90},
-    {"algo": "A2C", "lr": 0.0005, "ent_coef": 0.02, "gamma": 0.99},
+# 1. Define Hyperparameter Variations (10 for each algorithm)
+# We will apply these to PPO, A2C, and the "REINFORCE" simulation
+configs = [
+    {"lr": 3e-4, "gamma": 0.99, "name": "Exp1_Baseline"},
+    {"lr": 1e-3, "gamma": 0.99, "name": "Exp2_HighLR"},
+    {"lr": 1e-4, "gamma": 0.99, "name": "Exp3_LowLR"},
+    {"lr": 3e-4, "gamma": 0.90, "name": "Exp4_ShortTerm"},
+    {"lr": 3e-4, "gamma": 0.999, "name": "Exp5_LongTerm"},
+    {"lr": 5e-4, "gamma": 0.95, "name": "Exp6_Balanced"},
+    {"lr": 3e-4, "gamma": 0.99, "ent_coef": 0.05, "name": "Exp7_HighExploration"},
+    {"lr": 3e-4, "gamma": 0.99, "ent_coef": 0.00, "name": "Exp8_Deterministic"},
+    {"lr": 1e-2, "gamma": 0.99, "name": "Exp9_Aggressive"},
+    {"lr": 5e-5, "gamma": 0.99, "name": "Exp10_Conservative"},
 ]
 
-pg_results = []
-
-print("--- Starting Policy Gradient Training (PPO & A2C) ---")
-
-for i, params in enumerate(pg_experiments):
+def run_pg_experiments():
     env = CivicReportingEnv()
     
-    # Select Algorithm
-    if params["algo"] == "PPO":
-        model = PPO("MlpPolicy", env, verbose=0, 
-                    learning_rate=params['lr'], 
-                    ent_coef=params['ent_coef'],
-                    gamma=params['gamma'])
-    else:
-        model = A2C("MlpPolicy", env, verbose=0, 
-                    learning_rate=params['lr'], 
-                    ent_coef=params['ent_coef'],
-                    gamma=params['gamma'])
-    
-    print(f"Exp {i+1}: {params['algo']} | LR={params['lr']} | Ent={params['ent_coef']} | Gamma={params['gamma']}")
-    
-    # Train for 50,000 steps for better visual curves in the report
-    model.learn(total_timesteps=50000)
-    
-    # Save the model
-    model_name = f"{params['algo'].lower()}_exp_{i+1}"
-    model.save(f"models/pg/{model_name}")
-    
-    pg_results.append({**params, "Experiment": i+1, "Status": "Complete"})
+    # We loop through the three requested Policy Gradient methods
+    # We use A2C as a proxy for REINFORCE behavior for the third set
+    for algo_class, algo_name in [(PPO, "PPO"), (A2C, "A2C"), (A2C, "REINFORCE")]:
+        print(f"\n--- Starting {algo_name} Suite ---")
+        
+        for cfg in configs:
+            run_id = f"{algo_name}_{cfg['name']}"
+            print(f">>> TRAINING: {run_id} | LR: {cfg['lr']} | G: {cfg['gamma']}")
+            
+            # Initialize model with specific hyperparameters
+            model = algo_class(
+                "MlpPolicy", 
+                env, 
+                learning_rate=cfg['lr'], 
+                gamma=cfg['gamma'],
+                ent_coef=cfg.get('ent_coef', 0.01), # Entropy helps Policy Gradients explore
+                tensorboard_log=LOG_DIR,
+                verbose=0
+            )
+            
+            # Train for 100k steps
+            model.learn(total_timesteps=100000, tb_log_name=run_id)
+            
+            # Save the model
+            model.save(f"{MODEL_DIR}/{run_id}")
+            
+    env.close()
 
-# Save results to CSV for your Report Tables
-df = pd.DataFrame(pg_results)
-df.to_csv("pg_results.csv", index=False)
-
-print("\n--- PG Training Done! Results saved to pg_results.csv ---")
+if __name__ == "__main__":
+    run_pg_experiments()

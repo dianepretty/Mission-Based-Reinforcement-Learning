@@ -5,105 +5,84 @@ import random
 
 class CivicReportingEnv(gym.Env):
     """
-    A Custom Environment for Civic Issue Redress in Rwanda.
-    The agent acts as a Dispatcher, routing citizen reports to:
-    0: NLA (Land)
-    1: WASAC (Water)
-    2: REG (Electricity)
-    3: MinInfra (Infrastructure)
+    RL Environment for Rwanda Civic Issue Redress.
+    Institutions: 0: NLA, 1: WASAC, 2: REG, 3: MinInfra
     """
-    metadata = {"render_modes": ["human", "rgb_array"], "render_fps": 10}
+    metadata = {"render_modes": ["human"], "render_fps": 5}
 
     def __init__(self, render_mode=None):
         super(CivicReportingEnv, self).__init__()
         
-        self.render_mode = render_mode
+        self.institutions = ["NLA", "WASAC", "REG", "MinInfra"]
+        self.num_inst = len(self.institutions)
+        self.max_urgency = 5
+        self.max_steps = 100
+        
+        # Action Space: 0 (Stay/Wait), 1: NLA, 2: WASAC, 3: REG, 4: MinInfra
+        self.action_space = spaces.Discrete(self.num_inst + 1)
 
-        # Action Space: 4 Discrete Institutions
-        # 0: NLA, 1: WASAC, 2: REG, 3: MinInfra
-        self.action_space = spaces.Discrete(4)
-
-        # Observation Space: [Issue_Category, Urgency_Level, Wait_Time, Institution_Backlog]
-        # Category: 0-3 (Matching the institutions)
-        # Urgency: 1-10 (10 being most critical)
-        # Wait Time: 0-100 (Steps since reported)
-        # Backlog: 0-20 (Number of pending tasks in that institution)
-        self.observation_space = spaces.Box(
-            low=np.array([0, 1, 0, 0]), 
-            high=np.array([3, 10, 100, 20]), 
-            dtype=np.float32
-        )
+        # Observation: [Urgency_i, Time_i] for each inst + Agent_Position
+        # Size: (4 * 2) + 1 = 9
+        low = np.array([0, 0] * self.num_inst + [0], dtype=np.float32)
+        high = np.array([self.max_urgency, self.max_steps] * self.num_inst + [self.num_inst - 1], dtype=np.float32)
+        self.observation_space = spaces.Box(low=low, high=high, dtype=np.float32)
 
         self.state = None
-        self.steps_taken = 0
-        self.max_steps = 100
-        self.backlogs = [0, 0, 0, 0] # Tracks load per institution
-
-    def _get_obs(self):
-        return np.array(self.state, dtype=np.float32)
+        self.current_step = 0
+        self.render_mode = render_mode
 
     def reset(self, seed=None, options=None):
         super().reset(seed=seed)
+        # Random initial issues at 2 institutions
+        obs = np.zeros(self.num_inst * 2 + 1, dtype=np.float32)
+        for _ in range(2):
+            idx = random.randint(0, self.num_inst - 1)
+            obs[idx * 2] = random.randint(2, self.max_urgency)
         
-        # Generate a random new issue
-        category = random.randint(0, 3)
-        urgency = random.randint(1, 10)
-        wait_time = 0
-        avg_backlog = sum(self.backlogs) / 4
-        
-        self.state = [category, urgency, wait_time, avg_backlog]
-        self.steps_taken = 0
-        self.backlogs = [0, 0, 0, 0]
-        
-        return self._get_obs(), {}
+        self.state = obs
+        self.current_step = 0
+        return self.state, {}
 
     def step(self, action):
-        self.steps_taken += 1
-        category, urgency, wait_time, _ = self.state
-        
+        self.current_step += 1
         reward = 0
-        terminated = False
-        
-        # 1. Logic: Correct Routing
-        if action == category:
-            # Success reward scaled by urgency (high urgency = higher reward for speed)
-            reward += (2.0 * urgency)
-            self.backlogs[action] = max(0, self.backlogs[action] - 1)
+        agent_pos_idx = self.num_inst * 2
+        prev_pos = int(self.state[agent_pos_idx])
+
+        if action > 0:
+            target_idx = action - 1
+            urgency = self.state[target_idx * 2]
+            wait_time = self.state[target_idx * 2 + 1]
+
+            # Travel Penalty: Moving between institutions costs resources
+            if target_idx != prev_pos:
+                reward -= 2 
+
+            if urgency > 0:
+                # Accountability Reward: Priority * Speed
+                reward += (urgency * 15) + (wait_time * 0.5)
+                self.state[target_idx * 2] = 0 # Issue Resolved
+                self.state[target_idx * 2 + 1] = 0
+            else:
+                reward -= 5 # Penalty for idle dispatch
+            
+            self.state[agent_pos_idx] = target_idx
         else:
-            # Penalty for misallocation (Wrong institution)
-            reward -= 5.0
-            self.backlogs[action] += 1 # Adding to wrong backlog increases chaos
-            
-        # 2. Accountability Penalty: Wait time hurts the citizen experience
-        reward -= (wait_time * 0.1)
+            reward -= 1 # Penalty for total inaction
 
-        # 3. Efficiency Penalty: If backlogs get too high
-        if self.backlogs[action] > 10:
-            reward -= 2.0
+        # Aging and Spawning
+        for i in range(self.num_inst):
+            if self.state[i * 2] > 0:
+                self.state[i * 2 + 1] += 1
+                # Penalty for neglecting high urgency (Accountability Gap)
+                if self.state[i * 2] >= 4 and self.state[i * 2 + 1] > 5:
+                    reward -= 3
 
-        # Update State for next step:
-        # Simulate a new issue arriving
-        new_category = random.randint(0, 3)
-        new_urgency = random.randint(1, 10)
-        new_wait_time = random.randint(0, 5) # New issues start fresh
-        new_avg_backlog = sum(self.backlogs) / 4
-        
-        self.state = [new_category, new_urgency, new_wait_time, new_avg_backlog]
+        if random.random() < 0.2: # New issue pops up
+            spawn = random.randint(0, self.num_inst - 1)
+            if self.state[spawn * 2] == 0:
+                self.state[spawn * 2] = random.randint(1, self.max_urgency)
 
-        # Terminal conditions
-        if self.steps_taken >= self.max_steps:
-            terminated = True
-            
-        # Truncated is not used here but required by Gymnasium API
-        truncated = False
-        
-        return self._get_obs(), reward, terminated, truncated, {}
-
-    def render(self):
-        if self.render_mode == "human":
-            mapping = {0: "NLA", 1: "WASAC", 2: "REG", 3: "MinInfra"}
-            print(f"Step: {self.steps_taken} | Issue: {mapping[int(self.state[0])]} "
-                  f"| Urgency: {self.state[1]} | Backlog: {self.state[3]:.1f}")
-
-    def close(self):
-        pass
+        terminated = False
+        truncated = self.current_step >= self.max_steps
+        return self.state, reward, terminated, truncated, {}

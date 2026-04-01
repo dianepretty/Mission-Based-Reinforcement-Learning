@@ -1,49 +1,53 @@
+import os
 import gymnasium as gym
 from stable_baselines3 import DQN
 from environment.custom_env import CivicReportingEnv
-import pandas as pd
 
-# The 10 experiments with varying learning rates and discount factors
+# Setup Directories
+MODEL_DIR = "models/dqn/"
+LOG_DIR = "logs/dqn/"
+os.makedirs(MODEL_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# 1. Define your 10 Experiment Configurations
+# We vary Learning Rate (LR) and Gamma (G) to see how the agent prioritizes
 experiments = [
-  {"lr": 1e-2, "gamma": 0.99}, 
-    {"lr": 5e-3, "gamma": 0.99},
-    {"lr": 1e-3, "gamma": 0.99}, # Usually the "sweet spot"
-    {"lr": 5e-4, "gamma": 0.99},
-    {"lr": 1e-4, "gamma": 0.99},
-
-    # Group 2: Testing Gamma (Short-term vs. Long-term accountability)
-    {"lr": 1e-3, "gamma": 0.70}, # Very shortsighted
-    {"lr": 1e-3, "gamma": 0.85}, 
-    {"lr": 1e-3, "gamma": 0.90},
-    {"lr": 1e-3, "gamma": 0.95},
-    {"lr": 1e-3, "gamma": 0.995} # Extremely farsighted
+    {"lr": 1e-3, "gamma": 0.99, "name": "Exp1_Baseline"},
+    {"lr": 5e-4, "gamma": 0.99, "name": "Exp2_LowerLR"},
+    {"lr": 1e-4, "gamma": 0.99, "name": "Exp3_VeryLowLR"},
+    {"lr": 1e-3, "gamma": 0.95, "name": "Exp4_ShortTerm"},
+    {"lr": 1e-3, "gamma": 0.80, "name": "Exp5_ImmediateOnly"},
+    {"lr": 5e-4, "gamma": 0.95, "name": "Exp6_Balanced"},
+    {"lr": 1e-3, "gamma": 0.999, "name": "Exp7_LongTerm"},
+    {"lr": 3e-4, "gamma": 0.99, "name": "Exp8_StableBaselinesDefault"},
+    {"lr": 1e-2, "gamma": 0.99, "name": "Exp9_HighLR_Aggressive"},
+    {"lr": 1e-3, "gamma": 0.50, "name": "Exp10_Myopic_Agent"},
 ]
 
-results = []
-
-print("--- Starting DQN Training Experiments ---")
-
-for i, params in enumerate(experiments):
+def run_experiments():
     env = CivicReportingEnv()
-    # Initialize the "Brain"
-    model = DQN("MlpPolicy", env, verbose=0, 
-                learning_rate=params['lr'], 
-                gamma=params['gamma'])
     
-    print(f"Running Exp {i+1}: LR={params['lr']}, Gamma={params['gamma']}")
-    model.learn(total_timesteps=50000)
-    
-    # Save the model
-    model.save(f"models/dqn/dqn_exp_{i+1}")
-    
-    # Simple check for the report: record the final performance
-    results.append({
-        "Experiment": i+1,
-        "LR": params['lr'],
-        "Gamma": params['gamma'],
-        "Status": "Complete"
-    })
+    for exp in experiments:
+        print(f"\n>>> RUNNING: {exp['name']} | LR: {exp['lr']} | Gamma: {exp['gamma']}")
+        
+        model = DQN(
+            "MlpPolicy",
+            env,
+            verbose=0, # Set to 0 to keep terminal clean during 10 runs
+            learning_rate=exp['lr'],
+            gamma=exp['gamma'],
+            tensorboard_log=LOG_DIR
+        )
+        
+        # Train for 100k steps
+        model.learn(total_timesteps=100000, tb_log_name=exp['name'])
+        
+        # Save each model uniquely
+        model.save(f"{MODEL_DIR}/dqn_{exp['name']}")
+        
+        print(f">>> FINISHED: {exp['name']}")
 
-# Save results for your report table
-pd.DataFrame(results).to_csv("dqn_results.csv")
-print("--- Training Done! Check dqn_results.csv for your data. ---")
+    env.close()
+
+if __name__ == "__main__":
+    run_experiments()
