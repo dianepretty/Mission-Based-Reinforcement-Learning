@@ -106,6 +106,7 @@ class CivicRenderer:
         self.reward_history = []
         self.trust_history  = []
         self.frame          = 0
+        self.episode_count  = 1        
         self.start_time     = time.time()
         self.last_info      = None
 
@@ -115,6 +116,9 @@ class CivicRenderer:
         """Called each env step. info is env._get_info()."""
         self.last_info = info
         self.frame += 1
+
+        if info.get("step", 0) == 1:   # ← ADD THIS
+            self.episode_count += 1    # ← AND THIS
 
         # Track histories
         self.reward_history.append(info.get("total_reward", 0))
@@ -160,7 +164,7 @@ class CivicRenderer:
         total_r = info.get("total_reward", 0)
         elapsed = int(time.time() - self.start_time)
 
-        right_txt = f"Step {step:03d}/200   |   Trust {trust:.0f}%   |   Score {total_r:+.1f}   |   {elapsed}s"
+        right_txt = f"Episode {self.episode_count} | Step {step:03d}/200   |   Trust {trust:.0f}%   |   Score {total_r:+.1f}   |   {elapsed}s"
         rtxt = self.font_md.render(right_txt, True, TEXT_SECONDARY)
         self.screen.blit(rtxt, (self.W - rtxt.get_width() - 16, 16))
 

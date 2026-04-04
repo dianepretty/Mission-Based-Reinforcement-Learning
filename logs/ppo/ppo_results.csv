@@ -1,0 +1,11 @@
+Algorithm,Experiment,Learning Rate,Gamma,Entropy Coef,N Steps,GAE Lambda,Clip Range,Total Episodes,Final Mean Reward,Best Episode Reward,Convergence Episode,Description
+PPO,Exp01_Baseline,0.0003,0.99,0.01,512,0.95,0.2,4681,-11.9,155.13,4681,Standard baseline — default SB3 settings
+PPO,Exp02_HighLR,0.001,0.99,0.01,512,0.95,0.2,3142,-35.49,213.47,3142,High learning rate — faster but noisier updates
+PPO,Exp03_LowLR,0.0001,0.99,0.01,512,0.95,0.2,8235,-86.6,158.88,8235,Low learning rate — slow stable convergence
+PPO,Exp04_ShortSighted,0.0003,0.8,0.01,512,0.95,0.2,3290,-59.67,189.43,3290,Low gamma — agent focuses on immediate dispatch reward
+PPO,Exp05_LongSighted,0.0003,0.999,0.01,512,0.95,0.2,8164,-89.83,110.57,8164,Very high gamma — long term trust building prioritised
+PPO,Exp06_HighEntropy,0.0003,0.99,0.05,512,0.95,0.2,4887,-51.17,149.56,4887,High entropy — agent explores more action variety
+PPO,Exp07_LowEntropy,0.0003,0.99,0.001,512,0.95,0.2,8151,-78.37,106.62,8151,Low entropy — agent commits to learned policy early
+PPO,Exp08_LargeSteps,0.0003,0.99,0.01,1024,0.95,0.2,6976,-81.0,136.86,6976,"Large n_steps — more data per update, better gradient"
+PPO,Exp09_SmallSteps,0.0003,0.99,0.01,128,0.95,0.2,8138,-70.6,122.8,8138,"Small n_steps — frequent updates, more reactive"
+PPO,Exp10_Balanced,0.0005,0.95,0.02,256,0.9,0.15,1747,-101.58,267.34,1747,Balanced — tuned for civic env dynamics
