@@ -1,11 +1,11 @@
-Experiment,Learning Rate,Gamma,Hidden Size,Episodes,Final Mean Reward,Best Episode Reward,Convergence Episode,Description
-Exp01_Baseline,0.001,0.99,128,1000,-140.91,16.06,1000,Standard baseline
-Exp02_HighLR,0.005,0.99,128,1000,-188.79,-46.37,1000,High LR — fast but unstable
-Exp03_LowLR,0.0001,0.99,128,1000,-158.02,45.31,1000,Low LR — slow stable learning
-Exp04_ShortSighted,0.001,0.8,128,1000,-143.45,95.4,1000,Low gamma — immediate reward focus
-Exp05_LongSighted,0.001,0.999,128,1000,-130.88,28.4,1000,Very high gamma — long term planning
-Exp06_LargeNet,0.001,0.99,256,1000,-200.07,-0.5,1000,Larger network — more capacity
-Exp07_SmallNet,0.001,0.99,64,1000,-123.65,6.47,1000,"Smaller network — less capacity, faster"
-Exp08_Balanced,0.0005,0.95,128,1000,-135.62,-14.19,1000,Balanced LR and gamma
-Exp09_Aggressive,0.01,0.99,128,1000,-202.26,-46.08,1000,Very high LR — tests instability limits
-Exp10_Conservative,5e-05,0.99,128,1000,-150.16,17.77,1000,Very low LR — extremely cautious updates
+Experiment,Learning Rate,Gamma,Final Mean Reward,Best Episode Reward,Convergence Episode
+Exp01_Baseline,0.001,0.99,503.24,1138.75,20
+Exp02_HighLR,0.005,0.99,465.57,941.99,20
+Exp03_LowLR,0.0001,0.99,519.3,992.73,20
+Exp04_ShortSighted,0.001,0.8,408.51,978.73,20
+Exp05_LongSighted,0.001,0.999,497.33,890.87,20
+Exp06_LargeNet,0.001,0.99,519.2,930.49,20
+Exp07_SmallNet,0.001,0.99,494.93,1039.0,20
+Exp08_Balanced,0.0005,0.95,515.01,886.88,20
+Exp09_Aggressive,0.01,0.99,471.24,1030.7,20
+Exp10_Conservative,5e-05,0.99,477.48,911.69,20

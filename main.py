@@ -140,7 +140,7 @@ def run(algo=None, max_episodes=None):
 
                 # Render dashboard
                 renderer.render(info)
-                pygame.time.wait(250)
+                pygame.time.wait(800)
 
             total_rewards.append(episode_reward)
             status = "COLLAPSE" if terminated else "complete"

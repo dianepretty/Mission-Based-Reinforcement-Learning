@@ -1,11 +1,11 @@
-Experiment,Learning Rate,Gamma,Buffer Size,Batch Size,Exploration Fraction,Total Episodes,Final Mean Reward,Best Episode Reward,Convergence Episode,Description
-Exp01_Baseline,0.001,0.99,50000,64,0.15,3325,-20.52,200.71,1084,Standard baseline — default SB3 settings
-Exp02_LowLR,0.0001,0.99,50000,64,0.15,2966,-53.51,133.06,2966,Lower LR — slower but more stable convergence
-Exp03_HighLR,0.01,0.99,50000,64,0.15,3746,-24.21,193.12,1315,High LR — fast but risks instability
-Exp04_ShortSighted,0.001,0.8,50000,64,0.15,4947,-32.55,183.26,3933,Low gamma — agent prioritises immediate rewards
-Exp05_LongSighted,0.001,0.999,50000,64,0.15,3386,-44.73,195.46,1015,Very high gamma — agent plans far into the future
-Exp06_LargeBuffer,0.001,0.99,200000,64,0.15,3760,-10.31,223.06,671,Large replay buffer — more diverse experience
-Exp07_SmallBuffer,0.001,0.99,10000,64,0.15,3107,-36.63,187.69,848,Small buffer — agent forgets old experience quickly
-Exp08_LargeBatch,0.001,0.99,50000,256,0.15,3620,-33.47,222.99,930,Large batch — more stable gradient estimates
-Exp09_HighExploration,0.001,0.99,50000,64,0.4,3920,-5.1,147.77,2602,High exploration — agent tries more random actions longer
-Exp10_Balanced,0.0003,0.95,100000,128,0.2,3424,-32.69,171.2,1815,Balanced tuning — best of all worlds
+Experiment,Learning Rate,Gamma,Final Mean Reward,Best Episode Reward,Convergence Episode
+Exp01_Baseline,0.001,0.99,788.13,1164.2,20
+Exp02_LowLR,0.0001,0.99,535.77,935.86,20
+Exp03_HighLR,0.01,0.99,680.95,1281.23,20
+Exp04_ShortSighted,0.001,0.8,841.98,1299.86,20
+Exp05_LongSighted,0.001,0.999,798.95,1378.71,20
+Exp06_LargeBuffer,0.001,0.99,685.38,1189.29,20
+Exp07_SmallBuffer,0.001,0.99,766.3,1289.36,20
+Exp08_LargeBatch,0.001,0.99,754.92,1305.26,20
+Exp09_HighExploration,0.001,0.99,770.09,1221.01,20
+Exp10_Balanced,0.0003,0.95,646.98,1137.31,20
